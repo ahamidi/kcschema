@@ -2,17 +2,19 @@ package kcschema
 
 import (
 	"encoding/json"
-	"log"
-	"reflect"
+	"errors"
+	"github.com/meroxa/turbine-go"
 )
 
 type FieldType string
 
 const (
-	StringField FieldType = "string"
-	IntField    FieldType = "int"
-	FloatField  FieldType = "float"
-	MapField    FieldType = "map"
+	StringField  FieldType = "string"
+	IntField     FieldType = "int"
+	FloatField   FieldType = "float"
+	MapField     FieldType = "map"
+	BoolField    FieldType = "bool"
+	UnknownField FieldType = "unknown"
 )
 
 type FieldInterface interface {
@@ -27,7 +29,7 @@ type PayloadInterface interface {
 	Type(field string) FieldType
 }
 
-type Payload []byte
+type Payload turbine.Payload
 
 type Field struct {
 	Type  FieldType
@@ -36,43 +38,47 @@ type Field struct {
 
 type StructuredPayload map[string]Field
 
-func (p Payload) ParseAsJSON() (StructuredPayload, error) {
-	sp := make(map[string]Field)
+type PayloadType string
+
+const (
+	DebeziumCDCType      PayloadType = "debezium"
+	KCJSONWithSchemaType PayloadType = "KCJsonWithSchema"
+	JSONType             PayloadType = "json"
+	RawType              PayloadType = "raw"
+)
+
+func (p Payload) Type() PayloadType {
 	var m map[string]interface{}
 	err := json.Unmarshal(p, &m)
-
-	for f, v := range m {
-		log.Printf("f: %s, v: %+v", f, v)
-		log.Printf("parsed: %+v", parseField(v))
-		sp[f] = *parseField(v)
+	if err != nil {
+		return RawType
 	}
-	return sp, err
+
+	if p, ok := m["payload"]; ok {
+		if _, ok := p.(map[string]interface{})["before"]; ok {
+			return DebeziumCDCType
+		}
+		if _, ok := p.(map[string]interface{})["after"]; ok {
+			return DebeziumCDCType
+		}
+	}
+
+	if _, ok := m["schema"]; ok {
+		return KCJSONWithSchemaType
+	}
+
+	return JSONType
 }
 
-func parseField(v interface{}) *Field {
-	switch v.(type) {
-	case map[string]interface{}:
-		return &Field{
-			Type:  MapField,
-			Value: parseField(v),
-		}
-	case string:
-		return &Field{
-			Type:  StringField,
-			Value: v.(string),
-		}
-	case int, int32, int64:
-		return &Field{
-			Type:  IntField,
-			Value: v.(int),
-		}
-	case float32, float64:
-		return &Field{
-			Type:  FloatField,
-			Value: v.(float64),
-		}
+func Parse(p Payload) (StructuredPayload, error) {
+	switch p.Type() {
+	case JSONType:
+		return p.ParseAsJSON()
+	case KCJSONWithSchemaType:
+		return p.ParseAsKCSchema()
+	case DebeziumCDCType:
+		return p.ParseAsDBZSchema()
 	default:
-		log.Printf("v: %+v, type: %s", v, reflect.TypeOf(v).String())
+		return nil, errors.New("unable to parse payload")
 	}
-	return nil
 }

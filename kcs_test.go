@@ -1,45 +1,43 @@
 package kcschema
 
 import (
-	"encoding/json"
 	"log"
 	"testing"
 )
 
-func TestValue_MarshalJSON(t *testing.T) {
-	t1 := Value{
-		Schema: Schema{
-			Type:     "struct",
-			Name:     "customer_order",
-			Optional: false,
-			Fields: []SchemaField{
-				{Field: "id",
-					Optional: false,
-					Type:     "int32",
-				},
-			},
-		},
-		Payload: Payload(`{
-			"id": 1
-		}`),
-	}
+func TestPayload_KCSType(t *testing.T) {
+	r := sampleRecordWithSchema()
+	p := Payload(r)
 
-	b, err := json.Marshal(t1)
-	if err != nil {
-		t.Errorf("expected no error, got %s", err)
+	pt := p.Type()
+	if pt != KCJSONWithSchemaType {
+		t.Errorf("expected %s, got %s", KCJSONWithSchemaType, pt)
 	}
-
-	log.Printf("Empty: %+v", string(b))
-	sp, err := t1.Payload.ParseAsJSON()
-	log.Printf("JSON: %+v", sp)
 }
 
-func TestValue_UnmarshalJSON(t *testing.T) {
-	b := sampleRecordWithSchema()
-	var val Value
-	json.Unmarshal(b, &val)
-	log.Printf("Schema: %+v", val.Schema)
-	log.Printf("Payload: %+v", val.Payload)
+func TestPayload_KCSParse(t *testing.T) {
+	r := sampleRecordWithSchema()
+	p := Payload(r)
+
+	sp, err := Parse(p)
+	if err != nil {
+		t.Errorf("expected no error, got %s", err.Error())
+	}
+	log.Printf("sp: %+v", sp)
+}
+
+func TestStructuredPayload_AsKCSchemaJSON(t *testing.T) {
+	sp := StructuredPayload{
+		"id":    Field{Value: 1, Type: IntField},
+		"email": Field{Value: "alice@example.com", Type: StringField},
+	}
+
+	j, err := sp.AsKCSchemaJSON("users")
+	if err != nil {
+		t.Errorf("expected no error, got %s", err.Error())
+	}
+
+	log.Printf("j: %+v", string(j))
 }
 
 func sampleRecordWithSchema() []byte {
