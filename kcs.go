@@ -56,6 +56,8 @@ func mapKCTypeToType(t string) FieldType {
 	switch t {
 	case "struct":
 		return MapField
+	case "array":
+		return SliceField
 	case "string":
 		return StringField
 	case "int", "int32", "int64":
@@ -73,6 +75,8 @@ func mapTypeToKCType(t FieldType) string {
 	switch t {
 	case MapField:
 		return "struct"
+	case SliceField:
+		return "array"
 	case StringField:
 		return "string"
 	case IntField:

@@ -28,8 +28,9 @@ func TestPayload_KCSParse(t *testing.T) {
 
 func TestStructuredPayload_AsKCSchemaJSON(t *testing.T) {
 	sp := StructuredPayload{
-		"id":    Field{Value: 1, Type: IntField},
-		"email": Field{Value: "alice@example.com", Type: StringField},
+		"id":              Field{Value: 1, Type: IntField},
+		"email":           Field{Value: "alice@example.com", Type: StringField},
+		"friend_user_ids": Field{Value: []interface{}{4, 5, 6}, Type: SliceField},
 	}
 
 	j, err := sp.AsKCSchemaJSON("users")
@@ -45,13 +46,20 @@ func sampleRecordWithSchema() []byte {
 	"schema": {
 		"type": "struct",
 		"name": "customer_order",
-		"fields": [{
-			"field": "id",
-			"type": "int32"
-		}]
+		"fields": [
+			{
+				"field": "id",
+				"type": "int32"
+			},
+			{
+				"field": "related_item_ids",
+				"type": "array"
+			}
+		]
 	},
 	"payload": {
-		"id": 1
+		"id": 1,
+		"related_item_ids": [83,287,903]
 	}
 }`)
 }
