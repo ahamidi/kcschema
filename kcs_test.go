@@ -45,13 +45,20 @@ func sampleRecordWithSchema() []byte {
 	"schema": {
 		"type": "struct",
 		"name": "customer_order",
-		"fields": [{
-			"field": "id",
-			"type": "int32"
-		}]
+		"fields": [
+			{
+				"field": "id",
+				"type": "int32"
+			},
+			{
+				"field": "related_item_ids",
+				"type": "array"
+			}
+		]
 	},
 	"payload": {
-		"id": 1
+		"id": 1,
+		"related_item_ids": [83,287,903]
 	}
 }`)
 }

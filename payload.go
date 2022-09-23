@@ -3,6 +3,7 @@ package kcschema
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/meroxa/turbine-go"
 )
 
@@ -13,6 +14,7 @@ const (
 	IntField     FieldType = "int"
 	FloatField   FieldType = "float"
 	MapField     FieldType = "map"
+	SliceField   FieldType = "slice"
 	BoolField    FieldType = "bool"
 	UnknownField FieldType = "unknown"
 )

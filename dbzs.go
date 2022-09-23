@@ -9,9 +9,9 @@ type Operation string
 
 const (
 	Read   Operation = "r"
-	Create           = "c"
-	Update           = "u"
-	Delete           = "d"
+	Create Operation = "c"
+	Update Operation = "u"
+	Delete Operation = "d"
 )
 
 type DBZValue struct {
